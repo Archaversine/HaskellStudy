@@ -24,7 +24,6 @@ definition of the term correctly 3 times before moving on to the next term
 
 The following features plan to be added:
 
- - Fuzzy equivalence algorithm to avoid counting typos as incorrect.
  - More flexible syntax in the txt file to allow for multiple definitions per term.
  - An option to configure the number of iterations in reinforcement mode.
  - Ability to have multiple iterations of a `.txt` file (with config ability).
