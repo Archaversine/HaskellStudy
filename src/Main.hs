@@ -28,7 +28,9 @@ getVocabTerms = V.fromList . map toVocabTerm
             where (first, second) = break (== '\\') str
 
 isValidGuess :: String -> String -> Bool 
-isValidGuess guess definition = map toLower guess == map toLower definition
+isValidGuess guess definition = loweredGuess == loweredDefinition || editDistance loweredGuess loweredDefinition <= 2
+    where loweredGuess = map toLower guess 
+          loweredDefinition = map toLower definition
 
 reinforceTerm :: Int -> VocabTerm -> IO ()
 reinforceTerm 0 _ = return ()
@@ -55,7 +57,7 @@ guessAllUntilCorrect terms = do
     putStrLn $ "(?) " ++ term
     guess <- getLine
 
-    let correct = map toLower guess == map toLower definition
+    let correct = isValidGuess guess definition
         nextTerms = V.filter (/= vterm) terms
 
     if correct then
@@ -68,6 +70,23 @@ guessAllUntilCorrect terms = do
         putStrLn (redColor "Incorrect" ++ " - [" ++ definition ++ "]") >>
         reinforceTerm reinforceAmount vterm >>
         guessAllUntilCorrect terms
+
+-- Code from: https://stackoverflow.com/questions/5515025/edit-distance-algorithm-in-haskell-performance-tuning
+-- standard levenshtein distance between two lists
+editDistance :: Eq a => [a] -> [a] -> Int
+editDistance s1 s2 = editDistance' 1 1 1 (V.fromList s1) (V.fromList s2)
+
+-- weighted levenshtein distance
+-- ins, sub and del are the costs for the various operations
+editDistance' :: Eq a => Int -> Int -> Int -> V.Vector a -> V.Vector a -> Int
+editDistance' del sub ins s1 s2
+  | V.null s2 = ins * V.length s1
+  | V.null s1 = ins * V.length s2
+  | V.last s1 == V.last s2 = editDistance' del sub ins (V.init s1) (V.init s2)
+  | otherwise            = minimum [ editDistance' del sub ins s1 (V.init s2)        + del -- deletion 
+                                   , editDistance' del sub ins (V.init s1) (V.init s2) + sub -- substitution
+                                   , editDistance' del sub ins (V.init s1) s2        + ins -- insertion
+                                   ]
 
 main :: IO ()
 main = do 
